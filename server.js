@@ -33,7 +33,7 @@ app.use(
 );
 
 // Responder preflight en todas las rutas
-app.options("*", cors());
+app.options(/.*/, cors());
 
 app.use(express.json());
 
