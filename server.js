@@ -1,34 +1,26 @@
-const adminRouter = require("./routes/admin");
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const planesRouter = require("./routes/planes");
 require("dotenv").config();
 
+const planesRouter = require("./routes/planes");
 const vehiculosRouter = require("./routes/vehiculos");
-const uploadRouter = require("./routes/upload"); // <-- si tienes uploads
+const uploadRouter = require("./routes/upload");
 const adminPlanesRouter = require("./routes/adminPlanes");
+
 const app = express();
 
-// IMPORTANTE: primero CORS, luego body/json, luego rutas
+// ===== CORS PRIMERO =====
 const allowedOrigins = [
   "http://localhost:3000",
   "https://catalogovehiculos.netlify.app",
 ];
 
-app.use("/api/planes", planesRouter);
-app.use("/api/admin", adminRouter);           // login (y/o legacy)
-app.use("/api/admin", adminPlanesRouter);     // /api/admin/planes CRUD
-
-// Permitir preflight de forma correcta
 app.use(
   cors({
     origin: function (origin, cb) {
-      // Permite requests sin origin (ej. health checks, curl, server-to-server)
-      if (!origin) return cb(null, true);
-
+      if (!origin) return cb(null, true); // curl/healthchecks
       if (allowedOrigins.includes(origin)) return cb(null, true);
-
       return cb(new Error("Not allowed by CORS: " + origin));
     },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -37,23 +29,25 @@ app.use(
   })
 );
 
-// Responder preflight en todas las rutas
-app.options(/.*/, cors());
+// Preflight para todo
+app.options("*", cors());
 
+// ===== BODY PARSER =====
 app.use(express.json());
 
-// Servir imágenes estáticas
+// ===== STATIC FILES =====
 app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
 
-// Health check
+// ===== HEALTH =====
 app.get("/health", (req, res) => res.json({ ok: true }));
 
-// API
-app.use("/api/vehiculos", vehiculosRouter);
-app.use("/api/admin", adminRouter);
-app.use("/api/upload", uploadRouter); // <-- si usas upload
+// ===== API PUBLICA =====
+app.use("/api/planes", planesRouter);       // público: listado/ detalle planes
+app.use("/api/vehiculos", vehiculosRouter); // si aún lo dejas
+
+// ===== API ADMIN =====
+app.use("/api/admin", adminPlanesRouter);   // admin login + CRUD planes (y lo que pongas allí)
+app.use("/api/upload", uploadRouter);       // uploads
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Backend activo en http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Backend activo en http://localhost:${PORT}`));
