@@ -30,7 +30,7 @@ app.use(
 );
 
 // Preflight para todo
-app.options("*", cors());
+app.options(/.*/, cors());
 
 // ===== BODY PARSER =====
 app.use(express.json());
